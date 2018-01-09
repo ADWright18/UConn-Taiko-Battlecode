@@ -7,6 +7,12 @@ Repository for UConn Taiko (#707) - Battlecode
 * Rania Chowdhury
 * Robert Miller
 
+## Battlecode Information
+
+* https://www.battlecode.org/#/
+* [Battlecode 2018 Gameplay Specifications](https://s3.amazonaws.com/battlecode-2018/specs/battlecode-specs-2018.html)
+* [Tournament Overview](https://www.battlecode.org/#/tournaments)
+
 ## Setup
 
 ### 1. Download Git
