@@ -72,7 +72,7 @@ git fetch
 
 * Check out and edit the new branch
 ```
-git checkout (branch-name)
+git checkout -b (local-branch-name) origin/(branch-name)
 ```
 
 * Now you should be able to make edits to the branch without affecting the master branch
@@ -100,4 +100,10 @@ git commit -m "description of change"
 ### 5. Push changes to branch
 ```
 git push
+```
+
+### 6. Delete branch (after merging to master)
+```
+git branch -d (the-local-branch)
+git push origin --delete (the-remote-branch)
 ```
