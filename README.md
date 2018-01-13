@@ -102,7 +102,7 @@ git commit -m "description of change"
 git push
 ```
 
-### 5. Delete branch (after merging to master)
+### 6. Delete branch (after merging to master)
 ```
 git branch -d (the-local-branch)
 git push origin --delete (the-remote-branch)
