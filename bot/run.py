@@ -2,6 +2,7 @@ import battlecode as bc
 import random
 import sys
 import traceback
+import workerlogic
 
 import os
 print(os.getcwd())
@@ -11,9 +12,6 @@ print("pystarting")
 # A GameController is the main type that you talk to the game with.
 # Its constructor will connect to a running game.
 gc = bc.GameController()
-directions = [bc.Direction.North, bc.Direction.Northeast, bc.Direction.East, bc.Direction.Southeast, bc.Direction.South, bc.Direction.Southwest, bc.Direction.West, bc.Direction.Northwest]
-adjacent_directions = [bc.Direction.North, bc.Direction.East, bc.Direction.South, bc.Direction.West]
-tryRotate = [0,-1,1,-2,2]
 
 # List of attack units
 attack_unit = [bc.UnitType.Knight, bc.UnitType.Ranger, bc.UnitType.Mage]
@@ -41,7 +39,11 @@ gc.queue_research(bc.UnitType.Knight)
 
 my_team = gc.team()
 
-# Pathfinding functions
+workerlogic.run(gc)
+
+# Pathing functions, logic, and variables
+directions = [bc.Direction.North, bc.Direction.Northeast, bc.Direction.East, bc.Direction.Southeast, bc.Direction.South, bc.Direction.Southwest, bc.Direction.West, bc.Direction.Northwest]
+tryRotate = [0,-1,1,-2,2]
 
 def invert(loc):
     newx = earthMap.width - loc.x
@@ -52,11 +54,11 @@ def locToString(loc):
     return ' (' + str(loc.x) + ',' + str(loc.y) + ') '
 
 if gc.planet() == bc.Planet.Earth:
-    start_loc = gc.my_units()[0].location.map_location()
-    earthMap = gc.starting_map(bc.Planet.Earth)
-    enemyStart = invert(start_loc)
-    print('Worker starts at ' + locToString(start_loc))
-    print('Enemy worker presumably at ' + locToString(enemyStart))
+        start_loc = gc.my_units()[0].location.map_location()
+        earthMap = gc.starting_map(bc.Planet.Earth)
+        enemyStart = invert(start_loc)
+        print('Worker starts at ' + locToString(start_loc))
+        print('Enemy worker presumably at ' + locToString(enemyStart))
 
 def rotate(dir, amount):
     ind = directions.index(dir)
@@ -72,7 +74,7 @@ def fuzzygoto(unit, dest):
     for tilt in tryRotate:
         d = rotate(toward, tilt)
         if gc.can_move(unit.id, d):
-            gc.move_robot(unit.id, d)
+            run.gc.move_robot(unit.id, d)
             break
 
 while True:
