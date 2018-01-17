@@ -12,6 +12,7 @@ print("pystarting")
 # Its constructor will connect to a running game.
 gc = bc.GameController()
 directions = [bc.Direction.North, bc.Direction.Northeast, bc.Direction.East, bc.Direction.Southeast, bc.Direction.South, bc.Direction.Southwest, bc.Direction.West, bc.Direction.Northwest]
+adjacent_directions = [bc.Direction.North, bc.Direction.East, bc.Direction.South, bc.Direction.West]
 tryRotate = [0,-1,1,-2,2]
 
 # List of attack units
@@ -39,6 +40,8 @@ gc.queue_research(bc.UnitType.Worker)
 gc.queue_research(bc.UnitType.Knight)
 
 my_team = gc.team()
+
+# Pathfinding functions
 
 def invert(loc):
     newx = earthMap.width - loc.x
@@ -71,7 +74,6 @@ def fuzzygoto(unit, dest):
         if gc.can_move(unit.id, d):
             gc.move_robot(unit.id, d)
             break
-
 
 while True:
     # We only support Python 3, which means brackets around print()
