@@ -11,7 +11,7 @@ print("pystarting")
 # A GameController is the main type that you talk to the game with.
 # Its constructor will connect to a running game.
 gc = bc.GameController()
-directions = [bc.Direction.North, bc.Direction.Northeast, bc.Direction.East, bc.Direction.Southeast, bc.Direction.South, bc.Direction.Southwest, bc.Direction.West, bc.Direction.NorthWest]
+directions = [bc.Direction.North, bc.Direction.Northeast, bc.Direction.East, bc.Direction.Southeast, bc.Direction.South, bc.Direction.Southwest, bc.Direction.West, bc.Direction.Northwest]
 tryRotate = [0,-1,1,-2,2]
 
 # List of attack units
@@ -43,7 +43,7 @@ my_team = gc.team()
 def invert(loc):
     newx = earthMap.width - loc.x
     newy = earthMap.height - loc.y
-    return bc MapLocation(bc.Planet.Earth,newx ,newy)
+    return bc.MapLocation(bc.Planet.Earth,newx ,newy)
 
 def locToString(loc):
     return ' (' + str(loc.x) + ',' + str(loc.y) + ') '
@@ -52,7 +52,7 @@ if gc.planet() == bc.Planet.Earth:
     start_loc = gc.my_units()[0].location.map_location()
     earthMap = gc.starting_map(bc.Planet.Earth)
     enemyStart = invert(start_loc)
-    print('Worker starts at ' + locToString())
+    print('Worker starts at ' + locToString(start_loc))
     print('Enemy worker presumably at ' + locToString(enemyStart))
 
 def rotate(dir, amount):
@@ -64,7 +64,7 @@ def goto(unit, dest):
     if gc.can_move(unit.id, d):
         gc.move_robot(unit.id, d)
 
-def fuzzygoto(unit, dest)
+def fuzzygoto(unit, dest):
     toward = unit.location.map_location().direction_to(dest)
     for tilt in tryRotate:
         d = rotate(toward, tilt)
