@@ -28,6 +28,8 @@ gc.queue_research(bc.UnitType.Knight)
 
 my_team = gc.team()
 
+attack_unit = [bc.UnitType.Knight, bc.UnitType.Ranger, bc.UnitType.Mage]
+
 while True:
     # We only support Python 3, which means brackets around print()
     print('pyround:', gc.round())
@@ -39,16 +41,29 @@ while True:
 
             # first, factory logic
             if unit.unit_type == bc.UnitType.Factory:
+
                 garrison = unit.structure_garrison()
+                produce_unit = random.choice(attack_unit)
+
                 if len(garrison) > 0:
                     d = random.choice(directions)
                     if gc.can_unload(unit.id, d):
-                        print('unloaded a knight!')
+                        print('Unloaded a unit!')
                         gc.unload(unit.id, d)
                         continue
-                elif gc.can_produce_robot(unit.id, bc.UnitType.Knight):
-                    gc.produce_robot(unit.id, bc.UnitType.Knight)
-                    print('produced a knight!')
+                elif gc.can_produce_robot(unit.id, produce_unit):
+
+                    gc.produce_robot(unit.id, produce_unit)
+
+                    if produce_unit == bc.UnitType.Knight:
+                        print('Produced a knight!')
+
+                    elif produce_unit == bc.UnitType.Ranger:
+                        print('Produced a ranger!')
+
+                    elif produce_unit == bc.UnitType.Mage:
+                        print('Produced a mage!')
+
                     continue
 
             # first, let's look for nearby blueprints to work on
