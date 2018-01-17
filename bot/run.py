@@ -11,7 +11,19 @@ print("pystarting")
 # A GameController is the main type that you talk to the game with.
 # Its constructor will connect to a running game.
 gc = bc.GameController()
-directions = list(bc.Direction)
+directions = [bc.Direction.North, bc.Direction.Northeast, bc.Direction.East, bc.Direction.Southeast, bc.Direction.South, bc.Direction.Southwest, bc.Direction.West, bc.Direction.Northwest]
+tryRotate = [0,-1,1,-2,2]
+
+# List of attack units
+attack_unit = [bc.UnitType.Knight, bc.UnitType.Ranger, bc.UnitType.Mage]
+
+# Number of workers
+num_worker = 0
+
+for unit in gc.my_units():
+    if unit.unit_type == bc.UnitType.Worker:
+        num_worker += 1
+        print('Worker Count:' + str(num_worker))
 
 print("pystarted")
 
@@ -28,6 +40,39 @@ gc.queue_research(bc.UnitType.Knight)
 
 my_team = gc.team()
 
+def invert(loc):
+    newx = earthMap.width - loc.x
+    newy = earthMap.height - loc.y
+    return bc.MapLocation(bc.Planet.Earth,newx ,newy)
+
+def locToString(loc):
+    return ' (' + str(loc.x) + ',' + str(loc.y) + ') '
+
+if gc.planet() == bc.Planet.Earth:
+    start_loc = gc.my_units()[0].location.map_location()
+    earthMap = gc.starting_map(bc.Planet.Earth)
+    enemyStart = invert(start_loc)
+    print('Worker starts at ' + locToString(start_loc))
+    print('Enemy worker presumably at ' + locToString(enemyStart))
+
+def rotate(dir, amount):
+    ind = directions.index(dir)
+    return directions[(ind + amount)%8]
+
+def goto(unit, dest):
+    d = unit.location.map_location().direction_to(dest)
+    if gc.can_move(unit.id, d):
+        gc.move_robot(unit.id, d)
+
+def fuzzygoto(unit, dest):
+    toward = unit.location.map_location().direction_to(dest)
+    for tilt in tryRotate:
+        d = rotate(toward, tilt)
+        if gc.can_move(unit.id, d):
+            gc.move_robot(unit.id, d)
+            break
+
+
 while True:
     # We only support Python 3, which means brackets around print()
     print('pyround:', gc.round())
@@ -39,23 +84,45 @@ while True:
 
             # first, factory logic
             if unit.unit_type == bc.UnitType.Factory:
+
                 garrison = unit.structure_garrison()
+                produce_unit = random.choice(attack_unit)
+
                 if len(garrison) > 0:
                     d = random.choice(directions)
                     if gc.can_unload(unit.id, d):
-                        print('unloaded a knight!')
+                        print('Unloaded a unit!')
                         gc.unload(unit.id, d)
                         continue
-                elif gc.can_produce_robot(unit.id, bc.UnitType.Knight):
-                    gc.produce_robot(unit.id, bc.UnitType.Knight)
-                    print('produced a knight!')
+                elif gc.can_produce_robot(unit.id, produce_unit):
+
+                    gc.produce_robot(unit.id, produce_unit)
+
+                    if produce_unit == bc.UnitType.Knight:
+                        print('Produced a knight!')
+
+                    elif produce_unit == bc.UnitType.Ranger:
+                        print('Produced a ranger!')
+
+                    elif produce_unit == bc.UnitType.Mage:
+                        print('Produced a mage!')
+
                     continue
 
             # first, let's look for nearby blueprints to work on
             location = unit.location
             if location.is_on_map():
                 nearby = gc.sense_nearby_units(location.map_location(), 2)
+                d = random.choice(directions)
                 for other in nearby:
+                    if unit.unit_type == bc.UnitType.Worker and num_worker < 5 and bc.UnitType.can_replicate(unit.id, d):
+                        gc.replicate(unit.id, d)
+                        print('replicated a worker!')
+
+                        num_worker += 1
+                        print('Worker Count: ' + num_worker)
+                        continue
+
                     if unit.unit_type == bc.UnitType.Worker and gc.can_build(unit.id, other.id):
                         gc.build(unit.id, other.id)
                         print('built a factory!')
