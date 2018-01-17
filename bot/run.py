@@ -115,12 +115,12 @@ while True:
                 nearby = gc.sense_nearby_units(location.map_location(), 2)
                 d = random.choice(directions)
                 for other in nearby:
-                    if unit.unit_type == bc.UnitType.Worker and num_worker < 5 and bc.UnitType.can_replicate(unit.id, d):
+                    if unit.unit_type == bc.UnitType.Worker and num_worker < 5 and gc.can_replicate(unit.id, d):
                         gc.replicate(unit.id, d)
                         print('replicated a worker!')
 
                         num_worker += 1
-                        print('Worker Count: ' + num_worker)
+                        print('Worker Count: ' + str(num_worker))
                         continue
 
                     if unit.unit_type == bc.UnitType.Worker and gc.can_build(unit.id, other.id):
