@@ -13,6 +13,18 @@ print("pystarting")
 gc = bc.GameController()
 directions = list(bc.Direction)
 
+# List of attack units
+attack_unit = [bc.UnitType.Knight, bc.UnitType.Ranger, bc.UnitType.Mage]
+
+# Number of workers
+num_worker = 0
+
+for unit in gc.my_units():
+    if unit.unit_type == bc.UnitType.Worker:
+        num_worker += 1
+        print('Worker Count:' + str(num_worker))
+
+
 print("pystarted")
 
 # It's a good idea to try to keep your bots deterministic, to make debugging easier.
@@ -70,7 +82,16 @@ while True:
             location = unit.location
             if location.is_on_map():
                 nearby = gc.sense_nearby_units(location.map_location(), 2)
+                d = random.choice(directions)
                 for other in nearby:
+                    if unit.unit_type == bc.UnitType.Worker and num_worker < 5 and bc.UnitType.can_replicate(unit.id, d):
+                        gc.replicate(unit.id, d)
+                        print('replicated a worker!')
+
+                        num_worker += 1
+                        print('Worker Count: ' + num_worker)
+                        continue
+
                     if unit.unit_type == bc.UnitType.Worker and gc.can_build(unit.id, other.id):
                         gc.build(unit.id, other.id)
                         print('built a factory!')
