@@ -16,6 +16,8 @@ gc = bc.GameController()
 # List of attack units
 attack_unit = [bc.UnitType.Knight, bc.UnitType.Ranger, bc.UnitType.Mage]
 
+switch = 0
+
 # Number of workers
 num_worker = 0
 
@@ -39,8 +41,6 @@ gc.queue_research(bc.UnitType.Knight)
 
 my_team = gc.team()
 
-workerlogic.run(gc)
-
 # Pathing functions, logic, and variables
 directions = [bc.Direction.North, bc.Direction.Northeast, bc.Direction.East, bc.Direction.Southeast, bc.Direction.South, bc.Direction.Southwest, bc.Direction.West, bc.Direction.Northwest]
 tryRotate = [0,-1,1,-2,2]
@@ -54,11 +54,24 @@ def locToString(loc):
     return ' (' + str(loc.x) + ',' + str(loc.y) + ') '
 
 if gc.planet() == bc.Planet.Earth:
-        start_loc = gc.my_units()[0].location.map_location()
-        earthMap = gc.starting_map(bc.Planet.Earth)
-        enemyStart = invert(start_loc)
-        print('Worker starts at ' + locToString(start_loc))
-        print('Enemy worker presumably at ' + locToString(enemyStart))
+    start_loc = []
+    i = 0
+    for unit in gc.my_units:
+        start_loc[i] = gc.my_units()[i].location.map_location()
+        i += 1
+
+    earthMap = gc.starting_map(bc.Planet.Earth)
+
+    enemyStart = []
+
+    for loc in start_loc:
+        enemyStart.append(invert(loc))
+
+    for loc in start_loc:
+        print('Worker starts at ' + locToString(loc))
+
+    for enemyLoc in enemyStart:
+        print('Enemy worker presumably at ' + locToString(enemyLoc))
 
 def rotate(dir, amount):
     ind = directions.index(dir)
@@ -71,11 +84,14 @@ def goto(unit, dest):
 
 def fuzzygoto(unit, dest):
     toward = unit.location.map_location().direction_to(dest)
-    for tilt in tryRotate:
-        d = rotate(toward, tilt)
-        if gc.can_move(unit.id, d):
-            run.gc.move_robot(unit.id, d)
-            break
+    if toward == bc.Direction.Center:
+        print('At enemy location')
+    else:
+        for tilt in tryRotate:
+            d = rotate(toward, tilt)
+            if gc.can_move(unit.id, d):
+                gc.move_robot(unit.id, d)
+                break
 
 while True:
     # We only support Python 3, which means brackets around print()
@@ -114,28 +130,62 @@ while True:
                     continue
 
             # first, let's look for nearby blueprints to work on
+
             location = unit.location
             if location.is_on_map():
-                nearby = gc.sense_nearby_units(location.map_location(), 2)
+
                 d = random.choice(directions)
-                for other in nearby:
-                    if unit.unit_type == bc.UnitType.Worker and num_worker < 5 and gc.can_replicate(unit.id, d):
-                        gc.replicate(unit.id, d)
-                        print('replicated a worker!')
+                if unit.unit_type == bc.UnitType.Worker:
 
-                        num_worker += 1
-                        print('Worker Count: ' + str(num_worker))
-                        continue
+                    nearby = gc.sense_nearby_units(location.map_location(), 2)
 
-                    if unit.unit_type == bc.UnitType.Worker and gc.can_build(unit.id, other.id):
-                        gc.build(unit.id, other.id)
-                        print('built a factory!')
-                        # move onto the next unit
-                        continue
-                    if other.team != my_team and gc.is_attack_ready(unit.id) and gc.can_attack(unit.id, other.id):
-                        print('attacked a thing!')
-                        gc.attack(unit.id, other.id)
-                        continue
+                    for other in nearby:
+                        if num_worker < 5 and gc.can_replicate(unit.id, d):
+                            gc.replicate(unit.id, d)
+                            print('replicated a worker!')
+                            num_worker += 1
+                            print('Worker Count: ' + str(num_worker))
+                            continue
+
+                        if gc.can_build(unit.id, other.id):
+                            gc.build(unit.id, other.id)
+                            print('built a factory!')
+                            # move onto the next unit
+                            continue
+
+                elif unit.unit_type == bc.UnitType.Knight:
+                    nearby = gc.sense_nearby_units(location.map_location(), 2)
+                    for other in nearby:
+                        if other.team != my_team and gc.is_attack_ready(unit.id) and gc.can_attack(unit.id, other.id):
+                            print('Knight attacked a thing!')
+                            gc.attack(unit.id, other.id)
+                        elif gc.is_move_ready(unit.id):
+                            fuzzygoto(unit, enemyStart[switch])
+                            continue
+                elif unit.unit_type == bc.UnitType.Mage:
+                    nearby = gc.sense_nearby_units(location.map_location(), unit.attack_range())
+                    for other in nearby:
+                        if other.team != my_team and gc.is_attack_ready(unit.id) and gc.can_attack(unit.id, other.id):
+                            print('Mage attacked a thing!')
+                            gc.attack(unit.id, other.id)
+                            continue
+                        elif gc.is_move_ready(unit.id):
+                            fuzzygoto(unit, enemyStart[switch])
+                            continue
+
+                elif unit.unit_type == bc.UnitType.Ranger:
+                    nearby = gc.sense_nearby_units(location.map_location(), unit.attack_range())
+                    for other in nearby:
+                        if other.team != my_team and gc.is_attack_ready(unit.id) and gc.can_attack(unit.id, other.id):
+                            print('Ranger attacked a thing!')
+                            gc.attack(unit.id, other.id)
+                            continue
+                        elif gc.is_move_ready(unit.id):
+                            fuzzygoto(unit, enemyStart[switch])
+                            continue
+
+            switch += 1
+            switch = switch % enemyStart.length
 
             # okay, there weren't any dudes around
             # pick a random direction:
