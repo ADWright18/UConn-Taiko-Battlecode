@@ -2,7 +2,7 @@ import battlecode as bc
 import random
 import sys
 import traceback
-import workerlogic
+from manager import Manager
 
 import os
 print(os.getcwd())
@@ -11,7 +11,16 @@ print("pystarting")
 
 # A GameController is the main type that you talk to the game with.
 # Its constructor will connect to a running game.
-gc = bc.GameController()
+# gc = bc.GameController()
+
+manager = Manager()
+gc = manager.game_controller
+directions = manager.directions
+enemyStart = manager.enemyStart
+
+# Initial count of workers
+for unit in gc.my_units():
+    manager.countWorker()
 
 # List of attack units
 attack_unit = [bc.UnitType.Knight, bc.UnitType.Ranger, bc.UnitType.Mage]
@@ -19,12 +28,6 @@ attack_unit = [bc.UnitType.Knight, bc.UnitType.Ranger, bc.UnitType.Mage]
 switch = 0
 
 # Number of workers
-num_worker = 0
-
-for unit in gc.my_units():
-    if unit.unit_type == bc.UnitType.Worker:
-        num_worker += 1
-        print('Worker Count:' + str(num_worker))
 
 print("pystarted")
 
@@ -35,63 +38,15 @@ random.seed(6137)
 
 # let's start off with some research!
 # we can queue as much as we want.
+
 gc.queue_research(bc.UnitType.Rocket)
 gc.queue_research(bc.UnitType.Worker)
 gc.queue_research(bc.UnitType.Knight)
 
 my_team = gc.team()
 
-# Pathing functions, logic, and variables
-directions = [bc.Direction.North, bc.Direction.Northeast, bc.Direction.East, bc.Direction.Southeast, bc.Direction.South, bc.Direction.Southwest, bc.Direction.West, bc.Direction.Northwest]
-tryRotate = [0,-1,1,-2,2]
+manager.locateEnemy()
 
-def invert(loc):
-    newx = earthMap.width - loc.x
-    newy = earthMap.height - loc.y
-    return bc.MapLocation(bc.Planet.Earth,newx ,newy)
-
-def locToString(loc):
-    return ' (' + str(loc.x) + ',' + str(loc.y) + ') '
-
-if gc.planet() == bc.Planet.Earth:
-    start_loc = []
-    i = 0
-    for unit in gc.my_units:
-        start_loc[i] = gc.my_units()[i].location.map_location()
-        i += 1
-
-    earthMap = gc.starting_map(bc.Planet.Earth)
-
-    enemyStart = []
-
-    for loc in start_loc:
-        enemyStart.append(invert(loc))
-
-    for loc in start_loc:
-        print('Worker starts at ' + locToString(loc))
-
-    for enemyLoc in enemyStart:
-        print('Enemy worker presumably at ' + locToString(enemyLoc))
-
-def rotate(dir, amount):
-    ind = directions.index(dir)
-    return directions[(ind + amount)%8]
-
-def goto(unit, dest):
-    d = unit.location.map_location().direction_to(dest)
-    if gc.can_move(unit.id, d):
-        gc.move_robot(unit.id, d)
-
-def fuzzygoto(unit, dest):
-    toward = unit.location.map_location().direction_to(dest)
-    if toward == bc.Direction.Center:
-        print('At enemy location')
-    else:
-        for tilt in tryRotate:
-            d = rotate(toward, tilt)
-            if gc.can_move(unit.id, d):
-                gc.move_robot(unit.id, d)
-                break
 
 while True:
     # We only support Python 3, which means brackets around print()
@@ -140,11 +95,10 @@ while True:
                     nearby = gc.sense_nearby_units(location.map_location(), 2)
 
                     for other in nearby:
-                        if num_worker < 5 and gc.can_replicate(unit.id, d):
+                        if manager.num_worker < 5 and gc.can_replicate(unit.id, d):
                             gc.replicate(unit.id, d)
                             print('replicated a worker!')
-                            num_worker += 1
-                            print('Worker Count: ' + str(num_worker))
+                            manager.countWorker()
                             continue
 
                         if gc.can_build(unit.id, other.id):
@@ -160,8 +114,9 @@ while True:
                             print('Knight attacked a thing!')
                             gc.attack(unit.id, other.id)
                         elif gc.is_move_ready(unit.id):
-                            fuzzygoto(unit, enemyStart[switch])
+                            manager.fuzzygoto(unit, enemyStart[switch])
                             continue
+
                 elif unit.unit_type == bc.UnitType.Mage:
                     nearby = gc.sense_nearby_units(location.map_location(), unit.attack_range())
                     for other in nearby:
@@ -170,7 +125,7 @@ while True:
                             gc.attack(unit.id, other.id)
                             continue
                         elif gc.is_move_ready(unit.id):
-                            fuzzygoto(unit, enemyStart[switch])
+                            manager.fuzzygoto(unit, enemyStart[switch])
                             continue
 
                 elif unit.unit_type == bc.UnitType.Ranger:
@@ -181,11 +136,11 @@ while True:
                             gc.attack(unit.id, other.id)
                             continue
                         elif gc.is_move_ready(unit.id):
-                            fuzzygoto(unit, enemyStart[switch])
+                            manager.fuzzygoto(unit, enemyStart[switch])
                             continue
 
             switch += 1
-            switch = switch % enemyStart.length
+            switch = switch % len(enemyStart)
 
             # okay, there weren't any dudes around
             # pick a random direction:

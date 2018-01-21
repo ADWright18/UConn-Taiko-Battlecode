@@ -2,8 +2,10 @@ import battlecode as bc
 import random
 import sys
 import traceback
-import run
+import os
+from manager import Manager
 
-def run(gc):
-    print(run.gc.planet)
-    print('Hello World')
+gc = Manager.game_controller
+
+def run():
+    
